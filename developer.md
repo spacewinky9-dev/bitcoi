@@ -283,6 +283,51 @@ graph TD;
 5. **libbitcoin_node** - Only library that should depend on kernel
 6. **GUI/Wallet/Node** - Independent, communicate via `src/interfaces/`
 
+### Utility and Support Modules
+
+#### Common Module (`src/common/`)
+Shared functionality across different components:
+- **Arguments** (`args.cpp`) - Command-line argument parsing
+- **Settings** (`settings.cpp`) - Configuration management
+- **Bloom Filters** (`bloom.cpp`) - Probabilistic data structures for SPV
+- **Network Interfaces** (`netif.cpp`) - Network interface detection
+- **Message Signing** (`signmessage.cpp`) - Bitcoin message signing/verification
+- **PCP** (`pcp.cpp`) - Port Control Protocol for NAT traversal
+- **System Utilities** (`system.cpp`) - Platform-specific system calls
+
+#### Util Module (`src/util/`)
+Low-level utility functions:
+- **Filesystem** (`fs.h`, `fs_helpers.cpp`) - Cross-platform file operations
+- **String Encoding** (`strencodings.h`) - Hex, Base58, Base32, URL encoding
+- **Time** (`time.h`) - Time utilities and mocking for tests
+- **Translation** (`translation.h`) - Internationalization support
+- **Threading** (`thread.h`, `threadnames.cpp`) - Thread management
+- **Logging** - Logging framework (moved to `src/logging/`)
+- **BIP32** (`bip32.cpp`) - HD key derivation utilities
+- **Money** (`moneystr.cpp`) - Bitcoin amount formatting
+- **Check/Assert** (`check.h`) - Runtime assertions and checks
+- **RBF** (`rbf.h`) - Replace-by-fee utilities
+- **Result** (`result.h`) - Error handling with std::variant
+- **Fastrange** (`fastrange.h`) - Fast modulo reduction
+- **Bitset** (`bitset.h`) - Efficient bitset implementation
+
+#### Compat Module (`src/compat/`)
+Platform compatibility layer:
+- **Byte Swap** (`byteswap.h`) - Endianness conversion
+- **Endian** (`endian.h`) - Endianness detection and handling
+- **Platform Assumptions** (`assumptions.h`) - Compile-time checks
+- **CPUID** (`cpuid.h`) - CPU feature detection
+- **Stdin Handling** (`stdin.cpp`) - Platform-specific stdin operations
+
+#### Support Module (`src/support/`)
+Memory and security utilities:
+- **Locked Pool** (`lockedpool.cpp`) - Secure memory pool (mlocked)
+- **Cleanse** (`cleanse.cpp`) - Secure memory wiping
+- **Events** (`events.h`) - libevent wrapper utilities
+- **Allocators** (`allocators/`) - Custom memory allocators
+  - Secure allocator for sensitive data
+  - Zero-after-free allocator
+
 ---
 
 ## Build System
@@ -323,20 +368,41 @@ ctest --test-dir build
 ### Dependencies
 
 Core dependencies (see `doc/dependencies.md`):
-- **Boost** - Various utilities and data structures
-- **libevent** - Asynchronous event notification
-- **SQLite** - Wallet database (descriptor wallets)
-- **Berkeley DB** - Legacy wallet database
-- **Qt 6** - GUI framework (optional)
-- **ZeroMQ** - Message notifications (optional)
-- **MiniUPnPc** - UPnP port mapping (optional)
-- **libnatpmp** - NAT-PMP port mapping (optional)
+- **Boost** (>= 1.73.0) - Various utilities and data structures
+  - Filesystem, Thread, Test framework
+- **libevent** (>= 2.1.8) - Asynchronous event notification for HTTP server
+- **SQLite** (>= 3.32.0) - Wallet database (descriptor wallets)
+- **Berkeley DB** (4.8.30) - Legacy wallet database (deprecated)
+- **Qt 6** (>= 6.5.0) - GUI framework (optional)
+- **ZeroMQ** (>= 4.0.0) - Message notifications (optional)
+- **MiniUPnPc** (>= 2.2.2) - UPnP port mapping (optional)
+- **libnatpmp** (>= 20150609) - NAT-PMP port mapping (optional)
 
-Embedded libraries:
-- **LevelDB** - Blockchain database
-- **secp256k1** - ECDSA cryptography
-- **univalue** - JSON parsing
-- **minisketch** - Erlay set reconciliation
+Embedded libraries (included in source tree):
+- **LevelDB** (`src/leveldb/`) - Key-value store for blockchain database
+  - Block index storage
+  - Chainstate UTXO database
+- **secp256k1** (`src/secp256k1/`) - Elliptic curve cryptography
+  - ECDSA signatures
+  - Schnorr signatures (BIP 340)
+  - Public key recovery
+- **univalue** (`src/univalue/`) - JSON parsing and generation
+  - RPC request/response handling
+  - Configuration file parsing
+- **minisketch** (`src/minisketch/`) - Set reconciliation for Erlay
+  - Bandwidth-efficient transaction relay
+  - BCH-based set difference encoding
+- **CRC32C** (`src/crc32c/`) - Hardware-accelerated CRC32C
+  - Data integrity checks
+  - SSE4.2 optimization
+- **ctaes** (`src/crypto/ctaes/`) - Constant-time AES implementation
+  - Wallet encryption
+  - Side-channel resistance
+
+Build-only dependencies:
+- **CMake** (>= 3.22) - Build system
+- **Python** (>= 3.9) - Testing and scripting
+- **Clang/GCC** - C++ compiler with C++20 support
 
 ### Platform-Specific Builds
 
@@ -1268,6 +1334,38 @@ USDT (User Statically-Defined Tracing) support:
 **Primitives**
 - `src/primitives/transaction.h` - Transaction structure
 - `src/primitives/block.h` - Block structure
+
+### Key Data Structures
+
+**Core Types**
+- `uint256` (`src/uint256.h`) - 256-bit unsigned integer for hashes
+- `arith_uint256` (`src/arith_uint256.h`) - Arithmetic operations on uint256
+- `CBlock` / `CBlockHeader` - Block data structures
+- `CTransaction` - Transaction data structure
+- `CTxIn` / `CTxOut` - Transaction inputs and outputs
+- `CScript` - Bitcoin script container
+- `CPubKey` / `CKey` - Public and private keys
+
+**Blockchain State**
+- `CBlockIndex` - Block index entry
+- `CChain` - Active blockchain
+- `CCoinsView` - UTXO set view
+- `CChainState` - Complete chain state
+
+**Network Structures**
+- `CNode` - Peer connection
+- `CAddress` - Network address (IPv4/IPv6/Tor/I2P)
+- `CAddrInfo` - Address with metadata
+- `CService` - Network service (address + port)
+
+**Memory Pool**
+- `CTxMemPool` - Transaction pool
+- `CTxMemPoolEntry` - Mempool entry with metadata
+
+**Wallet Structures**
+- `CWallet` - Wallet instance
+- `CWalletTx` - Wallet transaction
+- `COutput` - Available output for spending
 
 ---
 
