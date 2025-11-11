@@ -1,8 +1,8 @@
-// Copyright (c) 2009-2022 The Bitcoin Core developers
+// Copyright (c) 2009-2022 The Sqoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <bitcoin-build-config.h> // IWYU pragma: keep
+#include <sqoin-build-config.h> // IWYU pragma: keep
 
 #include <arith_uint256.h>
 #include <chain.h>

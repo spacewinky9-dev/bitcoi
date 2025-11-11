@@ -1,10 +1,10 @@
-# Copyright (c) 2023-present The Bitcoin Core developers
+# Copyright (c) 2023-present The Sqoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or https://opensource.org/license/mit/.
 
 include(AddWindowsResources)
 
-configure_file(${PROJECT_SOURCE_DIR}/cmake/bitcoin-build-config.h.in bitcoin-build-config.h USE_SOURCE_PERMISSIONS @ONLY)
+configure_file(${PROJECT_SOURCE_DIR}/cmake/sqoin-build-config.h.in sqoin-build-config.h USE_SOURCE_PERMISSIONS @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 #=============================
@@ -38,19 +38,19 @@ if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 endif()
 
 add_custom_target(generate_build_info
-  BYPRODUCTS ${PROJECT_BINARY_DIR}/src/bitcoin-build-info.h
-  COMMAND ${CMAKE_COMMAND} -DBUILD_INFO_HEADER_PATH=${PROJECT_BINARY_DIR}/src/bitcoin-build-info.h -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P ${PROJECT_SOURCE_DIR}/cmake/script/GenerateBuildInfo.cmake
-  COMMENT "Generating bitcoin-build-info.h"
+  BYPRODUCTS ${PROJECT_BINARY_DIR}/src/sqoin-build-info.h
+  COMMAND ${CMAKE_COMMAND} -DBUILD_INFO_HEADER_PATH=${PROJECT_BINARY_DIR}/src/sqoin-build-info.h -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P ${PROJECT_SOURCE_DIR}/cmake/script/GenerateBuildInfo.cmake
+  COMMENT "Generating sqoin-build-info.h"
   VERBATIM
 )
-add_library(bitcoin_clientversion STATIC EXCLUDE_FROM_ALL
+add_library(sqoin_clientversion STATIC EXCLUDE_FROM_ALL
   clientversion.cpp
 )
-target_link_libraries(bitcoin_clientversion
+target_link_libraries(sqoin_clientversion
   PRIVATE
     core_interface
 )
-add_dependencies(bitcoin_clientversion generate_build_info)
+add_dependencies(sqoin_clientversion generate_build_info)
 
 add_subdirectory(crypto)
 add_subdirectory(util)
@@ -58,7 +58,7 @@ if(ENABLE_IPC)
   add_subdirectory(ipc)
 endif()
 
-add_library(bitcoin_consensus STATIC EXCLUDE_FROM_ALL
+add_library(sqoin_consensus STATIC EXCLUDE_FROM_ALL
   arith_uint256.cpp
   consensus/merkle.cpp
   consensus/tx_check.cpp
@@ -71,10 +71,10 @@ add_library(bitcoin_consensus STATIC EXCLUDE_FROM_ALL
   script/script_error.cpp
   uint256.cpp
 )
-target_link_libraries(bitcoin_consensus
+target_link_libraries(sqoin_consensus
   PRIVATE
     core_interface
-    bitcoin_crypto
+    sqoin_crypto
     secp256k1
 )
 
@@ -83,8 +83,8 @@ if(WITH_ZMQ)
 endif()
 
 # Home for common functionality shared by different executables and libraries.
-# Similar to `bitcoin_util` library, but higher-level.
-add_library(bitcoin_common STATIC EXCLUDE_FROM_ALL
+# Similar to `sqoin_util` library, but higher-level.
+add_library(sqoin_common STATIC EXCLUDE_FROM_ALL
   addresstype.cpp
   base58.cpp
   bech32.cpp
@@ -137,11 +137,11 @@ add_library(bitcoin_common STATIC EXCLUDE_FROM_ALL
   script/signingprovider.cpp
   script/solver.cpp
 )
-target_link_libraries(bitcoin_common
+target_link_libraries(sqoin_common
   PRIVATE
     core_interface
-    bitcoin_consensus
-    bitcoin_util
+    sqoin_consensus
+    sqoin_util
     univalue
     secp256k1
     Boost::headers
@@ -155,27 +155,27 @@ if(ENABLE_WALLET)
   add_subdirectory(wallet)
 
   if(BUILD_WALLET_TOOL)
-    add_executable(bitcoin-wallet
-      bitcoin-wallet.cpp
-      init/bitcoin-wallet.cpp
+    add_executable(sqoin-wallet
+      sqoin-wallet.cpp
+      init/sqoin-wallet.cpp
       wallet/wallettool.cpp
     )
-    add_windows_resources(bitcoin-wallet bitcoin-wallet-res.rc)
-    add_windows_application_manifest(bitcoin-wallet)
-    target_link_libraries(bitcoin-wallet
+    add_windows_resources(sqoin-wallet sqoin-wallet-res.rc)
+    add_windows_application_manifest(sqoin-wallet)
+    target_link_libraries(sqoin-wallet
       core_interface
-      bitcoin_wallet
-      bitcoin_common
-      bitcoin_util
+      sqoin_wallet
+      sqoin_common
+      sqoin_util
       Boost::headers
     )
-    install_binary_component(bitcoin-wallet HAS_MANPAGE)
+    install_binary_component(sqoin-wallet HAS_MANPAGE)
   endif()
 endif()
 
 
-# P2P and RPC server functionality used by `bitcoind` and `bitcoin-qt` executables.
-add_library(bitcoin_node STATIC EXCLUDE_FROM_ALL
+# P2P and RPC server functionality used by `sqoind` and `sqoin-qt` executables.
+add_library(sqoin_node STATIC EXCLUDE_FROM_ALL
   addrdb.cpp
   addrman.cpp
   banman.cpp
@@ -268,15 +268,15 @@ add_library(bitcoin_node STATIC EXCLUDE_FROM_ALL
   validation.cpp
   validationinterface.cpp
   versionbits.cpp
-  $<$<TARGET_EXISTS:bitcoin_wallet>:wallet/init.cpp>
-  $<$<NOT:$<TARGET_EXISTS:bitcoin_wallet>>:dummywallet.cpp>
+  $<$<TARGET_EXISTS:sqoin_wallet>:wallet/init.cpp>
+  $<$<NOT:$<TARGET_EXISTS:sqoin_wallet>>:dummywallet.cpp>
 )
-target_link_libraries(bitcoin_node
+target_link_libraries(sqoin_node
   PRIVATE
     core_interface
-    bitcoin_common
-    bitcoin_util
-    $<TARGET_NAME_IF_EXISTS:bitcoin_zmq>
+    sqoin_common
+    sqoin_util
+    $<TARGET_NAME_IF_EXISTS:sqoin_zmq>
     leveldb
     minisketch
     univalue
@@ -289,64 +289,64 @@ target_link_libraries(bitcoin_node
 
 # Bitcoin wrapper executable that can call other executables.
 if(BUILD_BITCOIN_BIN)
-  add_executable(bitcoin bitcoin.cpp)
-  add_windows_resources(bitcoin bitcoin-res.rc)
-  add_windows_application_manifest(bitcoin)
-  target_link_libraries(bitcoin core_interface bitcoin_common bitcoin_util)
-  install_binary_component(bitcoin HAS_MANPAGE)
+  add_executable(sqoin sqoin.cpp)
+  add_windows_resources(sqoin sqoin-res.rc)
+  add_windows_application_manifest(sqoin)
+  target_link_libraries(sqoin core_interface sqoin_common sqoin_util)
+  install_binary_component(sqoin HAS_MANPAGE)
 endif()
 
-# Bitcoin Core bitcoind.
+# Bitcoin Core sqoind.
 if(BUILD_DAEMON)
-  add_executable(bitcoind
-    bitcoind.cpp
-    init/bitcoind.cpp
+  add_executable(sqoind
+    sqoind.cpp
+    init/sqoind.cpp
   )
-  add_windows_resources(bitcoind bitcoind-res.rc)
-  add_windows_application_manifest(bitcoind)
-  target_link_libraries(bitcoind
+  add_windows_resources(sqoind sqoind-res.rc)
+  add_windows_application_manifest(sqoind)
+  target_link_libraries(sqoind
     core_interface
-    bitcoin_node
-    $<TARGET_NAME_IF_EXISTS:bitcoin_wallet>
+    sqoin_node
+    $<TARGET_NAME_IF_EXISTS:sqoin_wallet>
   )
-  install_binary_component(bitcoind HAS_MANPAGE)
+  install_binary_component(sqoind HAS_MANPAGE)
 endif()
 if(ENABLE_IPC AND BUILD_DAEMON)
-  add_executable(bitcoin-node
-    bitcoind.cpp
-    init/bitcoin-node.cpp
+  add_executable(sqoin-node
+    sqoind.cpp
+    init/sqoin-node.cpp
   )
-  target_link_libraries(bitcoin-node
+  target_link_libraries(sqoin-node
     core_interface
-    bitcoin_node
-    bitcoin_ipc
-    $<TARGET_NAME_IF_EXISTS:bitcoin_wallet>
+    sqoin_node
+    sqoin_ipc
+    $<TARGET_NAME_IF_EXISTS:sqoin_wallet>
   )
-  install_binary_component(bitcoin-node INTERNAL)
+  install_binary_component(sqoin-node INTERNAL)
 endif()
 
 if(ENABLE_IPC AND BUILD_TESTS)
-    # bitcoin_ipc_test library target is defined here in src/CMakeLists.txt
+    # sqoin_ipc_test library target is defined here in src/CMakeLists.txt
     # instead of src/test/CMakeLists.txt so capnp files in src/test/ are able to
     # reference capnp files in src/ipc/capnp/ by relative path. The Cap'n Proto
     # compiler only allows importing by relative path when the importing and
     # imported files are underneath the same compilation source prefix, so the
     # source prefix must be src/, not src/test/
-    add_library(bitcoin_ipc_test STATIC EXCLUDE_FROM_ALL
+    add_library(sqoin_ipc_test STATIC EXCLUDE_FROM_ALL
       test/ipc_test.cpp
     )
-    target_capnp_sources(bitcoin_ipc_test ${PROJECT_SOURCE_DIR}
+    target_capnp_sources(sqoin_ipc_test ${PROJECT_SOURCE_DIR}
       test/ipc_test.capnp
     )
-    add_dependencies(bitcoin_ipc_test bitcoin_ipc_headers)
+    add_dependencies(sqoin_ipc_test sqoin_ipc_headers)
 endif()
 
 
-add_library(bitcoin_cli STATIC EXCLUDE_FROM_ALL
+add_library(sqoin_cli STATIC EXCLUDE_FROM_ALL
   compat/stdin.cpp
   rpc/client.cpp
 )
-target_link_libraries(bitcoin_cli
+target_link_libraries(sqoin_cli
   PUBLIC
     core_interface
     univalue
@@ -355,45 +355,45 @@ target_link_libraries(bitcoin_cli
 
 # Bitcoin Core RPC client
 if(BUILD_CLI)
-  add_executable(bitcoin-cli bitcoin-cli.cpp)
-  add_windows_resources(bitcoin-cli bitcoin-cli-res.rc)
-  add_windows_application_manifest(bitcoin-cli)
-  target_link_libraries(bitcoin-cli
+  add_executable(sqoin-cli sqoin-cli.cpp)
+  add_windows_resources(sqoin-cli sqoin-cli-res.rc)
+  add_windows_application_manifest(sqoin-cli)
+  target_link_libraries(sqoin-cli
     core_interface
-    bitcoin_cli
-    bitcoin_common
-    bitcoin_util
+    sqoin_cli
+    sqoin_common
+    sqoin_util
     libevent::core
     libevent::extra
   )
-  install_binary_component(bitcoin-cli HAS_MANPAGE)
+  install_binary_component(sqoin-cli HAS_MANPAGE)
 endif()
 
 
 if(BUILD_TX)
-  add_executable(bitcoin-tx bitcoin-tx.cpp)
-  add_windows_resources(bitcoin-tx bitcoin-tx-res.rc)
-  add_windows_application_manifest(bitcoin-tx)
-  target_link_libraries(bitcoin-tx
+  add_executable(sqoin-tx sqoin-tx.cpp)
+  add_windows_resources(sqoin-tx sqoin-tx-res.rc)
+  add_windows_application_manifest(sqoin-tx)
+  target_link_libraries(sqoin-tx
     core_interface
-    bitcoin_common
-    bitcoin_util
+    sqoin_common
+    sqoin_util
     univalue
   )
-  install_binary_component(bitcoin-tx HAS_MANPAGE)
+  install_binary_component(sqoin-tx HAS_MANPAGE)
 endif()
 
 
 if(BUILD_UTIL)
-  add_executable(bitcoin-util bitcoin-util.cpp)
-  add_windows_resources(bitcoin-util bitcoin-util-res.rc)
-  add_windows_application_manifest(bitcoin-util)
-  target_link_libraries(bitcoin-util
+  add_executable(sqoin-util sqoin-util.cpp)
+  add_windows_resources(sqoin-util sqoin-util-res.rc)
+  add_windows_application_manifest(sqoin-util)
+  target_link_libraries(sqoin-util
     core_interface
-    bitcoin_common
-    bitcoin_util
+    sqoin_common
+    sqoin_util
   )
-  install_binary_component(bitcoin-util HAS_MANPAGE)
+  install_binary_component(sqoin-util HAS_MANPAGE)
 endif()
 
 
@@ -408,25 +408,25 @@ if(BUILD_KERNEL_LIB)
     add_subdirectory(test/kernel)
   endif()
   if(BUILD_UTIL_CHAINSTATE)
-    add_executable(bitcoin-chainstate
-      bitcoin-chainstate.cpp
+    add_executable(sqoin-chainstate
+      sqoin-chainstate.cpp
     )
-    add_windows_application_manifest(bitcoin-chainstate)
+    add_windows_application_manifest(sqoin-chainstate)
     # TODO: The `SKIP_BUILD_RPATH` property setting can be deleted
     #       in the future after reordering Guix script commands to
     #       perform binary checks after the installation step.
     # Relevant discussions:
-    # - https://github.com/hebasto/bitcoin/pull/236#issuecomment-2183120953
-    # - https://github.com/bitcoin/bitcoin/pull/30312#issuecomment-2191235833
-    set_target_properties(bitcoin-chainstate PROPERTIES
+    # - https://github.com/hebasto/sqoin/pull/236#issuecomment-2183120953
+    # - https://github.com/sqoin/sqoin/pull/30312#issuecomment-2191235833
+    set_target_properties(sqoin-chainstate PROPERTIES
       SKIP_BUILD_RPATH OFF
     )
-    target_link_libraries(bitcoin-chainstate
+    target_link_libraries(sqoin-chainstate
       PRIVATE
         core_interface
         bitcoinkernel
     )
-    install_binary_component(bitcoin-chainstate INTERNAL)
+    install_binary_component(sqoin-chainstate INTERNAL)
   endif()
 endif()
 
